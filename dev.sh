@@ -1,0 +1,1 @@
+nodemon ./bin & webpack -w

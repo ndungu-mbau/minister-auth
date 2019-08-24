@@ -1,0 +1,114 @@
+import sha1 from 'sha1'
+import jwt from 'jsonwebtoken'
+import random from 'randomatic'
+
+const { SECRET } = process.env
+
+const topic = 'auth-service'
+
+export default async ({ hemera, db }) => {
+  hemera.add({
+    topic,
+    cmd: 'create-admin'
+  }, async ({ name, contact, password, churchName }) => {
+    const churchId = random('0', 6).split('').reduce((acc, value, idx) => idx === 3? `${acc}-${value}`: `${acc}${value}`)
+
+    await hemera.act({
+      topic:'db-service',
+      cmd:'insert-one',
+      collection: 'church',
+      obj: { churchId, churchName }
+    })
+
+    const hashedPassword = sha1(password)
+
+    const { _id } = hemera.act({
+      topic:'db-service',
+      cmd:'insert-one',
+      collection:'admins',
+      obj: { name, contact, hashedPassword, churchId }
+    })
+
+    const token = jwt.sign({ contact, _id, admin: true }, SECRET)
+
+    return { token }
+  })
+
+  hemera.add({
+    topic,
+    cmd: 'create-user'
+  }, async ({ name, contact, password, churchId } ) => {
+    const hashedPassword = sha1(password)
+
+    const { _id } = hemera.act({
+      topic:'db-service',
+      cmd:'insert-one',
+      collection:'users',
+      obj: { name, contact, hashedPassword, churchId }
+    })
+
+    const token = jwt.sign({ contact, _id, admin: false }, SECRET)
+
+    return { token }
+  })
+
+  hemera.add({
+    topic,
+    cmd: 'login-admin'
+  }, async ({ contact, password }) => {
+    const user = await hemera.act({
+      topic: 'db-service',
+      cmd:'find-one'
+      collection:'admins'
+      params: { contact: contact}
+    })
+
+    if(user && user.contact === contact){
+      if(user.hashedPassword === sha1(password)){
+        const token = jwt.sign({ contact, _id: user._id, admin: true }, SECRET)
+        
+        return { token, ok: true }
+      } else {
+        return { ok: false, message:"password was incorrect"}
+      }
+    } else {
+      return { ok: false, message:"user not found"}
+    }
+  })
+
+  hemera.add({
+    topic,
+    cmd: 'login-user'
+  }, async ({ contact, password }) => {
+    const user = await hemera.act({
+      topic: 'db-service',
+      cmd:'find-one'
+      collection:'users'
+      params: { contact: contact}
+    })
+
+    if(user && user.contact === contact){
+      if(user.hashedPassword === sha1(password)){
+        const token = jwt.sign({ contact, _id: user._id, admin: false }, SECRET)
+        
+        return { token, ok: true }
+      } else {
+        return { ok: false, message:"password was incorrect"}
+      }
+    } else {
+      return { ok: false, message:"user not found"}
+    }
+  })
+
+  hemera.add({
+    topic,
+    cmd: 'verify-jwt'
+  }, async ({ token }) => {
+    if(!token){
+      return { message: "not authenticated", ok: false }
+    } else {
+      const user = jwt.decode(token)
+      return user
+    }
+  })
+}
