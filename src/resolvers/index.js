@@ -29,7 +29,9 @@ export default async ({ hemera, db }) => {
       obj: { name, contact, hashedPassword, churchId }
     })
 
-    const token = jwt.sign({ contact, _id, admin: true }, SECRET)
+    console.log(_id)
+
+    const token = jwt.sign({ contact, _id, churchId, admin: true }, SECRET)
 
     return { token }
   })
@@ -47,7 +49,7 @@ export default async ({ hemera, db }) => {
       obj: { name, contact, hashedPassword, churchId }
     })
 
-    const token = jwt.sign({ contact, _id, admin: false }, SECRET)
+    const token = jwt.sign({ contact, _id, churchId, admin: false }, SECRET)
 
     return { token }
   })
@@ -58,15 +60,15 @@ export default async ({ hemera, db }) => {
   }, async ({ contact, password }) => {
     const user = await hemera.act({
       topic: 'db-service',
-      cmd:'find-one'
-      collection:'admins'
+      cmd:'find-one',
+      collection:'admins',
       params: { contact: contact}
     })
 
     if(user && user.contact === contact){
       if(user.hashedPassword === sha1(password)){
-        const token = jwt.sign({ contact, _id: user._id, admin: true }, SECRET)
-        
+        const token = jwt.sign({ contact, _id: user._id, churchId: user.churchId, admin: true }, SECRET)
+
         return { token, ok: true }
       } else {
         return { ok: false, message:"password was incorrect"}
@@ -80,17 +82,17 @@ export default async ({ hemera, db }) => {
     topic,
     cmd: 'login-user'
   }, async ({ contact, password }) => {
-    const user = await hemera.act({
+    const { data: user } = await hemera.act({
       topic: 'db-service',
-      cmd:'find-one'
-      collection:'users'
-      params: { contact: contact}
+      cmd:'find-one',
+      collection:'users',
+      params: { contact }
     })
 
     if(user && user.contact === contact){
       if(user.hashedPassword === sha1(password)){
-        const token = jwt.sign({ contact, _id: user._id, admin: false }, SECRET)
-        
+        const token = jwt.sign({ contact, _id: user._id, churchId: user.churchId, admin: false }, SECRET)
+
         return { token, ok: true }
       } else {
         return { ok: false, message:"password was incorrect"}
