@@ -10,4 +10,4 @@ COPY . .
 
 RUN yarn build
 
-ENTRYPOINT [ "node", "bin" ]
+CMD [ "node", "bin" ]
