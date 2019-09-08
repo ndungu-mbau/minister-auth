@@ -12,11 +12,10 @@ pipelines:
           - docker
         script: # Modify the commands below to build your repository.
           # Set $DOCKER_HUB_USERNAME and $DOCKER_HUB_PASSWORD as environment variables in repository settings
-          - export IMAGE_NAME=$DOCKER_HUB_USERNAME/minister-auth-service:latest
-          - export IMAGE_TAG=$$DOCKER_HUB_USERNAME/minister-auth-service:$BITBUCKET_COMMIT
+          - export IMAGE_NAME=$DOCKER_HUB_USERNAME/minister-auth-service
 
           # build the Docker image (this will use the Dockerfile in the root of the repo)
-          - docker build -t $IMAGE_NAME -t IMAGE_TAG .
+          - docker build -t $IMAGE_NAME:latest -t $IMAGE_NAME:$BITBUCKET_COMMIT .
           # authenticate with the Docker Hub registry
           - docker login --username $DOCKER_HUB_USERNAME --password $DOCKER_HUB_PASSWORD
           # push the new Docker image to the Docker registry
