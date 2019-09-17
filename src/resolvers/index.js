@@ -58,7 +58,7 @@ export default async ({ hemera, db }) => {
     topic,
     cmd: 'login-admin'
   }, async ({ contact, password }) => {
-    const user = await hemera.act({
+    const { data: user } = await hemera.act({
       topic: 'db-service',
       cmd:'find-one',
       collection:'admins',
