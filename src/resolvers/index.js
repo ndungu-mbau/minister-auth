@@ -11,27 +11,27 @@ export default async ({ hemera, db }) => {
     topic,
     cmd: 'create-admin'
   }, async ({ name, contact, password, churchName }) => {
-    const churchId = random('0', 6).split('').reduce((acc, value, idx) => idx === 3? `${acc}-${value}`: `${acc}${value}`)
+    const id = random('0', 6).split('').reduce((acc, value, idx) => idx === 3? `${acc}-${value}`: `${acc}${value}`)
 
     await hemera.act({
       topic:'db-service',
       cmd:'insert-one',
       collection: 'church',
-      obj: { churchId, churchName }
+      obj: { id, name: churchName }
     })
 
     const hashedPassword = sha1(password)
 
-    const { _id } = hemera.act({
+    const { data: { _id }} = await hemera.act({
       topic:'db-service',
       cmd:'insert-one',
       collection:'admins',
-      obj: { name, contact, hashedPassword, churchId }
+      obj: { name, contact, hashedPassword, church: id }
     })
 
     console.log(_id)
 
-    const token = jwt.sign({ contact, _id, churchId, admin: true }, SECRET)
+    const token = jwt.sign({ contact, _id, church: id, admin: true }, SECRET)
 
     return { token }
   })
@@ -39,17 +39,17 @@ export default async ({ hemera, db }) => {
   hemera.add({
     topic,
     cmd: 'create-user'
-  }, async ({ name, contact, password, churchId } ) => {
+  }, async ({ name, contact, password, church } ) => {
     const hashedPassword = sha1(password)
 
     const { _id } = hemera.act({
       topic:'db-service',
       cmd:'insert-one',
       collection:'users',
-      obj: { name, contact, hashedPassword, churchId }
+      obj: { name, contact, hashedPassword, church }
     })
 
-    const token = jwt.sign({ contact, _id, churchId, admin: false }, SECRET)
+    const token = jwt.sign({ contact, _id, church, admin: false }, SECRET)
 
     return { token }
   })
@@ -67,7 +67,7 @@ export default async ({ hemera, db }) => {
 
     if(user && user.contact === contact){
       if(user.hashedPassword === sha1(password)){
-        const token = jwt.sign({ contact, _id: user._id, churchId: user.churchId, admin: true }, SECRET)
+        const token = jwt.sign({ contact, _id: user._id, church: user.church, admin: true }, SECRET)
 
         return { token, ok: true }
       } else {
@@ -91,7 +91,7 @@ export default async ({ hemera, db }) => {
 
     if(user && user.contact === contact){
       if(user.hashedPassword === sha1(password)){
-        const token = jwt.sign({ contact, _id: user._id, churchId: user.churchId, admin: false }, SECRET)
+        const token = jwt.sign({ contact, _id: user._id, church: user.church, admin: false }, SECRET)
 
         return { token, ok: true }
       } else {
