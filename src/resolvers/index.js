@@ -62,7 +62,7 @@ export default async ({ hemera, db }) => {
       topic: 'db-service',
       cmd:'find-one',
       collection:'admins',
-      params: { contact: contact}
+      params: { contact }
     })
 
     if(user && user.contact === contact){
