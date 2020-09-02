@@ -46,7 +46,7 @@ export default async ({ hemera, db }) => {
       topic:'db-service',
       cmd:'insert-one',
       collection:'users',
-      obj: { name, contact, hashedPassword, church }
+      obj: { name, contact, hashedPassword, church, archived: false }
     })
 
     const token = jwt.sign({ contact, _id, church, admin: false }, SECRET)
