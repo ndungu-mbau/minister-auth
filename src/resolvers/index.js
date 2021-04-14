@@ -1,8 +1,12 @@
 import sha1 from 'sha1'
 import jwt from 'jsonwebtoken'
 import random from 'randomatic'
+import axios from 'axios'
 
-const { SECRET } = process.env
+const {
+  SECRET,
+  LIVEGO_URL,
+} = process.env
 
 const topic = 'auth-service'
 
@@ -13,11 +17,13 @@ export default async ({ hemera, db }) => {
   }, async ({ name, contact, password, churchName }) => {
     const id = random('0', 6).split('').reduce((acc, value, idx) => idx === 3? `${acc}-${value}`: `${acc}${value}`)
 
+    const { data: { data: streamingKey }} = await axios(`${LIVEGO_URL}/control/get?room=${id}`)
+
     await hemera.act({
       topic:'db-service',
       cmd:'insert-one',
       collection: 'church',
-      obj: { id, name: churchName }
+      obj: { id, name: churchName, streamingKey }
     })
 
     const hashedPassword = sha1(password)
