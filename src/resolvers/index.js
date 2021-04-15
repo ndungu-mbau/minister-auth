@@ -35,8 +35,6 @@ export default async ({ hemera, db }) => {
       obj: { name, contact, hashedPassword, church: id }
     })
 
-    console.log(_id)
-
     const token = jwt.sign({ contact, _id, church: id, admin: true }, SECRET)
 
     return { token }
