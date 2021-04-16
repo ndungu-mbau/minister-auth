@@ -18,5 +18,5 @@ const hemera = new Hemera(nats, {
 
 hemera.ready(async () => {
   await resolvers({ hemera })
-  console.log("Auth Service running successfully")
+  console.log("[MINISTER]: Auth Service running successfully")
 })
